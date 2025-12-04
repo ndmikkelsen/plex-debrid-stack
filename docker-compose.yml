@@ -1,0 +1,203 @@
+version: "3.8"
+
+services:
+  # =============================================================================
+  # ZURG - Real-Debrid WebDAV server
+  # =============================================================================
+  zurg:
+    image: ghcr.io/debridmediamanager/zurg-testing:latest
+    container_name: zurg
+    restart: unless-stopped
+    ports:
+      - "9999:9999"
+    volumes:
+      - ./config/zurg:/config
+      - ./data/zurg:/data
+    environment:
+      - PUID=1000
+      - PGID=1000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9999/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =============================================================================
+  # RCLONE - Mounts Zurg WebDAV as local filesystem
+  # =============================================================================
+  rclone:
+    image: rclone/rclone:latest
+    container_name: rclone
+    restart: unless-stopped
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    devices:
+      - /dev/fuse
+    volumes:
+      - ./config/rclone:/config/rclone
+      - ./mnt:/data:shared
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
+    environment:
+      - PUID=1000
+      - PGID=1000
+    command: >
+      mount zurg: /data/zurg
+      --config=/config/rclone/rclone.conf
+      --allow-other
+      --allow-non-empty
+      --dir-cache-time=10s
+      --vfs-cache-mode=full
+      --vfs-cache-max-size=50G
+      --vfs-cache-max-age=24h
+      --vfs-read-chunk-size=128M
+      --vfs-read-chunk-size-limit=1G
+      --buffer-size=128M
+      --poll-interval=15s
+      --log-level=INFO
+    depends_on:
+      zurg:
+        condition: service_healthy
+
+  # =============================================================================
+  # PLEX MEDIA SERVER
+  # =============================================================================
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+      - VERSION=docker
+      # Uncomment and set your claim token from https://plex.tv/claim
+      # - PLEX_CLAIM=claim-xxxxxxxxxxxxxxxxxx
+    volumes:
+      - ./config/plex:/config
+      - ./mnt/zurg:/media:ro
+      # Optional: Keep your existing Plex config
+      # - /path/to/existing/plex/config:/config
+    depends_on:
+      - rclone
+
+  # =============================================================================
+  # SONARR - TV Show Management
+  # =============================================================================
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    ports:
+      - "8989:8989"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - ./config/sonarr:/config
+      - ./mnt/zurg:/media:ro
+      # Optional: Keep your existing Sonarr config
+      # - /path/to/existing/sonarr/config:/config
+
+  # =============================================================================
+  # RADARR - Movie Management
+  # =============================================================================
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    ports:
+      - "7878:7878"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - ./config/radarr:/config
+      - ./mnt/zurg:/media:ro
+      # Optional: Keep your existing Radarr config
+      # - /path/to/existing/radarr/config:/config
+
+  # =============================================================================
+  # PROWLARR - Indexer Manager (Replaces Jackett/NZBHydra)
+  # =============================================================================
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    restart: unless-stopped
+    ports:
+      - "9696:9696"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - ./config/prowlarr:/config
+
+  # =============================================================================
+  # RDTCLIENT - Real-Debrid Torrent Client (qBittorrent API emulator)
+  # =============================================================================
+  rdtclient:
+    image: rogerfar/rdtclient:latest
+    container_name: rdtclient
+    restart: unless-stopped
+    ports:
+      - "6500:6500"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - ./config/rdtclient:/data/db
+      - ./mnt/zurg:/data/downloads:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # =============================================================================
+  # OVERSEERR - Request Management UI
+  # Users request content here → Sonarr/Radarr → RDTClient → Real-Debrid
+  # =============================================================================
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    restart: unless-stopped
+    ports:
+      - "5055:5055"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - ./config/overseerr:/config
+    depends_on:
+      - sonarr
+      - radarr
+      - plex
+
+  # =============================================================================
+  # CLOUDFLARE TUNNEL - Secure external access without port forwarding
+  # Exposes Overseerr to the internet via Cloudflare's network
+  # =============================================================================
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - overseerr
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  default:
+    driver: bridge

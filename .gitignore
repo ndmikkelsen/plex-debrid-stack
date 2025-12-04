@@ -1,0 +1,22 @@
+# Environment files (contain secrets)
+.env
+
+# Actual config files (users copy from .example files)
+config/zurg/config.yml
+config/rclone/rclone.conf
+
+# Runtime data directories
+data/
+mnt/
+
+# Service-generated config directories (contain personal data/tokens)
+config/plex/
+config/sonarr/
+config/radarr/
+config/prowlarr/
+config/overseerr/
+config/rdtclient/
+config/tailscale/
+
+# Logs
+*.log
