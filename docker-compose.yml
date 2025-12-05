@@ -35,7 +35,7 @@ services:
       - /dev/fuse
     volumes:
       - ./config/rclone:/config/rclone
-      - ./mnt:/data:shared
+      - /media/sf_PlexMedia:/data:shared
       - /etc/passwd:/etc/passwd:ro
       - /etc/group:/etc/group:ro
     environment:
@@ -75,7 +75,7 @@ services:
       - PLEX_CLAIM=claim-UrUXzScQ9_RK9gNNBjMU
     volumes:
       - ./config/plex:/config
-      - ./mnt/zurg:/debrid:rshared
+      - /media/sf_PlexMedia/zurg:/debrid:rshared
       - /mnt/media:/media
       - /mnt/media1:/media1
       - /mnt/media2:/media2
@@ -98,7 +98,7 @@ services:
       - TZ=America/New_York
     volumes:
       - ./config/sonarr:/config
-      - ./mnt/zurg:/debrid:rshared
+      - /media/sf_PlexMedia/zurg:/debrid:rshared
       - /mnt/media:/media
       - /mnt/media1:/media1
       - /mnt/media2:/media2
@@ -119,7 +119,7 @@ services:
       - TZ=America/New_York
     volumes:
       - ./config/radarr:/config
-      - ./mnt/zurg:/debrid:rshared
+      - /media/sf_PlexMedia/zurg:/debrid:rshared
       - /mnt/media:/media
       - /mnt/media1:/media1
       - /mnt/media2:/media2
@@ -156,7 +156,7 @@ services:
       - TZ=America/New_York
     volumes:
       - ./config/rdtclient:/data/db
-      - ./mnt/zurg:/debrid:rshared
+      - /media/sf_PlexMedia/zurg:/debrid:rshared
     logging:
       driver: json-file
       options:
