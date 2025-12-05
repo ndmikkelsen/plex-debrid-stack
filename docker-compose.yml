@@ -75,7 +75,7 @@ services:
       - PLEX_CLAIM=claim-UrUXzScQ9_RK9gNNBjMU
     volumes:
       - ./config/plex:/config
-      - ./mnt/zurg:/debrid:ro
+      - ./mnt/zurg:/debrid:rshared
       - /mnt/media:/media
       - /mnt/media1:/media1
       - /mnt/media2:/media2
@@ -98,7 +98,7 @@ services:
       - TZ=America/New_York
     volumes:
       - ./config/sonarr:/config
-      - ./mnt/zurg:/debrid:ro
+      - ./mnt/zurg:/debrid:rshared
       - /mnt/media:/media
       - /mnt/media1:/media1
       - /mnt/media2:/media2
@@ -119,7 +119,7 @@ services:
       - TZ=America/New_York
     volumes:
       - ./config/radarr:/config
-      - ./mnt/zurg:/debrid:ro
+      - ./mnt/zurg:/debrid:rshared
       - /mnt/media:/media
       - /mnt/media1:/media1
       - /mnt/media2:/media2
@@ -156,7 +156,7 @@ services:
       - TZ=America/New_York
     volumes:
       - ./config/rdtclient:/data/db
-      - ./mnt/zurg:/debrid:ro
+      - ./mnt/zurg:/debrid:rshared
     logging:
       driver: json-file
       options:
