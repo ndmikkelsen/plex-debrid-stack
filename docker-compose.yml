@@ -199,26 +199,6 @@ services:
     depends_on:
       - overseerr
 
-  # =============================================================================
-  # NZBGET - Usenet downloader (merged from old configuration)
-  # =============================================================================
-  nzbget:
-    image: linuxserver/nzbget
-    container_name: nzbget
-    restart: unless-stopped
-    network_mode: host
-    env_file: uidgid.env
-    hostname: nzbget.media.com
-    environment:
-      - VIRTUAL_HOST=nzbget.media.com
-      - VIRTUAL_PORT=6789
-    volumes:
-      - /home/media/nzbget:/config
-      - /mnt/media:/media
-      - /mnt/media1:/media1
-      - /mnt/media2:/media2
-      - /media/sf_PlexMedia:/media3
-
 networks:
   default:
     driver: bridge
