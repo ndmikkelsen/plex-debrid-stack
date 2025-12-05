@@ -9,8 +9,8 @@ services:
     ports:
       - "9999:9999"
     volumes:
-      - ./config/zurg:/config
-      - ./data/zurg:/data
+      - ./config/zurg/config.yml:/app/config.yml
+      - ./data/zurg:/app/data
     environment:
       - PUID=1000
       - PGID=1000
