@@ -35,7 +35,7 @@ services:
       - /dev/fuse
     volumes:
       - ./config/rclone:/config/rclone
-      - /media/sf_PlexMedia:/data:shared
+      - /media/sf_PlexMedia:/data:rshared
       - /etc/passwd:/etc/passwd:ro
       - /etc/group:/etc/group:ro
     environment:
