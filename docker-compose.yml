@@ -47,12 +47,12 @@ services:
       --allow-other
       --allow-non-empty
       --dir-cache-time=10s
-      --vfs-cache-mode=full
-      --vfs-cache-max-size=50G
-      --vfs-cache-max-age=24h
+      --vfs-cache-mode=writes
+      --vfs-cache-max-size=5G
+      --vfs-cache-max-age=1h
       --vfs-read-chunk-size=128M
       --vfs-read-chunk-size-limit=1G
-      --buffer-size=128M
+      --buffer-size=64M
       --poll-interval=15s
       --log-level=INFO
     depends_on:
