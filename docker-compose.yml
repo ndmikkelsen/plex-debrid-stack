@@ -1,6 +1,7 @@
 services:
   # =============================================================================
   # ZURG - Real-Debrid WebDAV server
+  # Organizes your Real-Debrid library and serves it via WebDAV
   # =============================================================================
   zurg:
     image: ghcr.io/debridmediamanager/zurg-testing:latest
@@ -12,8 +13,8 @@ services:
       - ./config/zurg/config.yml:/app/config.yml
       - ./data/zurg:/app/data
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9999/"]
       interval: 30s
@@ -22,6 +23,7 @@ services:
 
   # =============================================================================
   # RCLONE - Mounts Zurg WebDAV as local filesystem
+  # Makes Real-Debrid content available as a local directory
   # =============================================================================
   rclone:
     image: rclone/rclone:latest
@@ -35,21 +37,21 @@ services:
       - /dev/fuse
     volumes:
       - ./config/rclone:/config/rclone
-      - /media/sf_PlexMedia:/data:rshared
+      - ./mnt:/data:rshared
       - /etc/passwd:/etc/passwd:ro
       - /etc/group:/etc/group:ro
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
     command: >
       mount zurg: /data/zurg
       --config=/config/rclone/rclone.conf
       --allow-other
       --allow-non-empty
       --dir-cache-time=10s
-      --vfs-cache-mode=writes
-      --vfs-cache-max-size=5G
-      --vfs-cache-max-age=1h
+      --vfs-cache-mode=full
+      --vfs-cache-max-size=10G
+      --vfs-cache-max-age=24h
       --vfs-read-chunk-size=128M
       --vfs-read-chunk-size-limit=1G
       --buffer-size=64M
@@ -60,7 +62,8 @@ services:
         condition: service_healthy
 
   # =============================================================================
-  # PLEX MEDIA SERVER (updated to reflect volumes and settings)
+  # PLEX MEDIA SERVER
+  # Streams your media library to all devices
   # =============================================================================
   plex:
     image: linuxserver/plex:latest
@@ -68,23 +71,20 @@ services:
     restart: unless-stopped
     network_mode: host
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/Chicago
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
       - VERSION=docker
-      - PLEX_CLAIM=claim-UrUXzScQ9_RK9gNNBjMU
+      - PLEX_CLAIM=${PLEX_CLAIM:-}
     volumes:
       - ./config/plex:/config
-      - /media/sf_PlexMedia/zurg:/debrid:rshared
-      - /mnt/media:/media
-      - /mnt/media1:/media1
-      - /mnt/media2:/media2
-      - /media/sf_PlexMedia:/media3
+      - ./mnt/zurg:/debrid:rshared
     depends_on:
       - rclone
 
   # =============================================================================
-  # SONARR (merged from old and new configuration)
+  # SONARR - TV Show automation
+  # Monitors for new episodes and sends requests to download
   # =============================================================================
   sonarr:
     image: linuxserver/sonarr:latest
@@ -93,19 +93,16 @@ services:
     ports:
       - "8989:8989"
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
     volumes:
       - ./config/sonarr:/config
-      - /media/sf_PlexMedia/zurg:/debrid:rshared
-      - /mnt/media:/media
-      - /mnt/media1:/media1
-      - /mnt/media2:/media2
-      - /media/sf_PlexMedia:/media3
+      - ./mnt/zurg:/debrid:rshared
 
   # =============================================================================
-  # RADARR (merged from old and new configuration)
+  # RADARR - Movie automation
+  # Monitors for new movies and sends requests to download
   # =============================================================================
   radarr:
     image: linuxserver/radarr:latest
@@ -114,19 +111,16 @@ services:
     ports:
       - "7878:7878"
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
     volumes:
       - ./config/radarr:/config
-      - /media/sf_PlexMedia/zurg:/debrid:rshared
-      - /mnt/media:/media
-      - /mnt/media1:/media1
-      - /mnt/media2:/media2
-      - /media/sf_PlexMedia:/media3
+      - ./mnt/zurg:/debrid:rshared
 
   # =============================================================================
-  # PROWLARR - Indexer Manager (Replaces Jackett/NZBHydra)
+  # PROWLARR - Indexer Manager
+  # Manages torrent indexers and syncs them to Sonarr/Radarr
   # =============================================================================
   prowlarr:
     image: linuxserver/prowlarr:latest
@@ -135,14 +129,15 @@ services:
     ports:
       - "9696:9696"
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
     volumes:
       - ./config/prowlarr:/config
 
   # =============================================================================
-  # RDTCLIENT - Real-Debrid Torrent Client (qBittorrent API emulator)
+  # RDTCLIENT - Real-Debrid Torrent Client
+  # Emulates qBittorrent API, sends torrents to Real-Debrid
   # =============================================================================
   rdtclient:
     image: rogerfar/rdtclient:latest
@@ -151,12 +146,12 @@ services:
     ports:
       - "6500:6500"
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
     volumes:
       - ./config/rdtclient:/data/db
-      - /media/sf_PlexMedia/zurg:/debrid:rshared
+      - ./mnt/zurg:/debrid:rshared
     logging:
       driver: json-file
       options:
@@ -165,6 +160,7 @@ services:
 
   # =============================================================================
   # OVERSEERR - Request Management UI
+  # User-friendly interface for requesting movies and TV shows
   # =============================================================================
   overseerr:
     image: linuxserver/overseerr:latest
@@ -173,9 +169,9 @@ services:
     ports:
       - "5055:5055"
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
     volumes:
       - ./config/overseerr:/config
     depends_on:
@@ -184,7 +180,9 @@ services:
       - plex
 
   # =============================================================================
-  # CLOUDFLARE TUNNEL - Secure external access without port forwarding
+  # CLOUDFLARE TUNNEL - Secure external access (Optional)
+  # Exposes Overseerr to the internet without port forwarding
+  # Remove this service if not using Cloudflare Tunnel
   # =============================================================================
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -195,8 +193,9 @@ services:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       - overseerr
+    profiles:
+      - tunnel
 
 networks:
   default:
     driver: bridge
-

@@ -1,10 +1,20 @@
+# =============================================================================
 # Zurg Configuration
-# Get your Real-Debrid API token from: https://real-debrid.com/apitoken
+# =============================================================================
+# Zurg organizes your Real-Debrid content as a WebDAV server
+# Documentation: https://github.com/debridmediamanager/zurg-testing
+#
+# Copy this file to config.yml:
+#   cp config.yml.example config.yml
+# =============================================================================
+
+zurg: v1
 
 # =============================================================================
-# REQUIRED: Set your Real-Debrid API token
+# REQUIRED: Real-Debrid API Token
 # =============================================================================
-token: YOUR_REAL_DEBRID_API_TOKEN_HERE
+# Get your token from: https://real-debrid.com/apitoken
+token: "YOUR_REAL_DEBRID_API_TOKEN_HERE"
 
 # =============================================================================
 # Server Settings
@@ -14,37 +24,40 @@ port: 9999
 
 # =============================================================================
 # Directory Structure Configuration
-# This determines how your media appears in the mount
 # =============================================================================
-directories:
-  # Movies organized for Radarr
-  movies:
-    group: media
-    group_order: 1
-    filters:
-      - regex: /movies?/i
-      - regex: /films?/i
-      - has_episodes: false
+# Sonarr handles: TV shows + Anime (anything with episodes)
+# Radarr handles: Movies (everything else)
+#
+# The 'group_order' determines priority - lower numbers are checked first
+# Shows (with episodes) are matched first, then movies catch everything else
 
-  # TV Shows organized for Sonarr
+directories:
+  # TV Shows & Anime - picked up by Sonarr
+  # Matches anything with episode structure (S01E01, etc.)
   shows:
     group: media
-    group_order: 2
+    group_order: 10
     filters:
-      - regex: /tv|shows?|series/i
       - has_episodes: true
 
-  # Anime (can be picked up by Sonarr with proper naming)
-  anime:
+  # Movies - picked up by Radarr
+  # Catch-all for everything without episode structure
+  movies:
     group: media
-    group_order: 3
+    group_order: 100
+    only_show_the_biggest_file: true
     filters:
-      - regex: /anime/i
+      - regex: /.*/
 
 # =============================================================================
-# Cache Settings
+# Repair Settings - Auto-fix broken/expired download links
 # =============================================================================
-# How often to refresh the library from Real-Debrid (in seconds)
+enable_repair: true
+check_for_changes_every_secs: 60
+
+# =============================================================================
+# Performance & Cache Settings
+# =============================================================================
 network_buffer_size: 4194304
 retain_folder_name_extension: false
 retain_rd_torrent_name: false
@@ -55,11 +68,6 @@ use_download_cache: true
 # =============================================================================
 # Advanced Settings
 # =============================================================================
-# Concurrent downloads for cache
 concurrent_workers: 32
-
-# API request rate limiting
 api_rate_limit_per_minute: 250
-
-# Download retry settings
 download_retries: 3

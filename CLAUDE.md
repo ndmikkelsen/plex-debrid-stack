@@ -23,35 +23,38 @@ External access is provided via **Cloudflare Tunnel** (cloudflared) - only Overs
 
 ```bash
 # Start all services
-docker-compose up -d
+docker compose up -d
+
+# Start with Cloudflare tunnel
+docker compose --profile tunnel up -d
 
 # Stop all services
-docker-compose down
+docker compose down
 
 # View logs (all services)
-docker-compose logs -f
+docker compose logs -f
 
 # View specific service logs
-docker-compose logs -f zurg
-docker-compose logs -f rclone
-docker-compose logs -f plex
+docker compose logs -f zurg
+docker compose logs -f rclone
+docker compose logs -f plex
 
 # Restart a single service
-docker-compose restart <service>
+docker compose restart <service>
 
 # Update all images
-docker-compose pull && docker-compose up -d
+docker compose pull && docker compose up -d
 
 # Check service status
-docker-compose ps
+docker compose ps
 ```
 
 ## Configuration Files
 
 Sensitive configs must be created from examples before first run:
 - `config/zurg/config.yml` - Real-Debrid API token goes here
-- `config/rclone/rclone.conf` - WebDAV mount config
-- `.env` - Cloudflare tunnel token
+- `config/rclone/rclone.conf` - WebDAV mount config (no changes needed)
+- `.env` - Environment variables (PUID, PGID, TZ, PLEX_CLAIM, CLOUDFLARE_TUNNEL_TOKEN)
 
 Create from examples:
 ```bash
@@ -60,12 +63,13 @@ cp config/rclone/rclone.conf.example config/rclone/rclone.conf
 cp .env.example .env
 ```
 
-## Key docker-compose.yml Settings
+## Key Environment Variables
 
+All set in `.env` file:
 - `PUID`/`PGID` - User/group IDs (find with `id $(whoami)`)
 - `TZ` - Timezone (e.g., `America/New_York`)
 - `PLEX_CLAIM` - Only needed for new Plex installs (get from https://plex.tv/claim)
-- `CLOUDFLARE_TUNNEL_TOKEN` - Set in `.env` file
+- `CLOUDFLARE_TUNNEL_TOKEN` - For external access via Cloudflare Tunnel
 
 ## Service Dependencies
 
@@ -73,7 +77,7 @@ The services have startup dependencies:
 - `rclone` waits for `zurg` to be healthy
 - `plex` depends on `rclone`
 - `overseerr` depends on `sonarr`, `radarr`, and `plex`
-- `cloudflared` depends on `overseerr`
+- `cloudflared` depends on `overseerr` (only starts with `--profile tunnel`)
 
 ## Inter-Service Communication
 
@@ -82,14 +86,15 @@ Services communicate using container names as hostnames:
 - Prowlarr connects to Sonarr at `sonarr:8989` and Radarr at `radarr:7878`
 - Overseerr connects to Sonarr/Radarr/Plex using their container names
 - rclone connects to Zurg at `http://zurg:9999/dav`
+- Plex uses `network_mode: host` so it's accessed at `localhost:32400`
 
 ## Mount Points
 
-- `./mnt/zurg` - rclone mount point for Real-Debrid content (read-only to other services)
+- `./mnt/zurg` - rclone mount point for Real-Debrid content
 - `./config/<service>` - Persistent config for each service
 - `./data/zurg` - Zurg data directory
 
-The main docker-compose.yml also includes legacy NZBGet and mounts to `/mnt/media`, `/mnt/media1`, `/mnt/media2`, `/media/sf_PlexMedia` for backwards compatibility during migration.
+Inside containers, the Real-Debrid content is available at `/debrid`.
 
 ## Troubleshooting
 

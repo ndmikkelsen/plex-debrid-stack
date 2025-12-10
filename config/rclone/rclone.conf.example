@@ -1,3 +1,15 @@
+# =============================================================================
+# rclone Configuration
+# =============================================================================
+# This configures rclone to mount Zurg's WebDAV as a local filesystem
+# Documentation: https://rclone.org/webdav/
+#
+# Copy this file to rclone.conf:
+#   cp rclone.conf.example rclone.conf
+#
+# No changes required - this connects to the zurg container via Docker network
+# =============================================================================
+
 [zurg]
 type = webdav
 url = http://zurg:9999/dav

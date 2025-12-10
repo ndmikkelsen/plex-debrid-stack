@@ -10,12 +10,20 @@ data/
 mnt/
 
 # Service-generated config directories (contain personal data/tokens)
-config/plex/
-config/sonarr/
-config/radarr/
-config/prowlarr/
-config/overseerr/
-config/rdtclient/
+# Keep .gitkeep files but ignore everything else
+# Plex - ignore all runtime files but keep example
+config/plex/Library/Application Support/Plex Media Server/*
+!config/plex/Library/Application Support/Plex Media Server/Preferences.xml.example
+config/sonarr/*
+!config/sonarr/.gitkeep
+config/radarr/*
+!config/radarr/.gitkeep
+config/prowlarr/*
+!config/prowlarr/.gitkeep
+config/overseerr/*
+!config/overseerr/.gitkeep
+config/rdtclient/*
+!config/rdtclient/.gitkeep
 config/tailscale/
 
 # Logs
