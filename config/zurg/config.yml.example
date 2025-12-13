@@ -1,47 +1,28 @@
-# =============================================================================
 # Zurg Configuration
-# =============================================================================
-# Zurg organizes your Real-Debrid content as a WebDAV server
 # Documentation: https://github.com/debridmediamanager/zurg-testing
 #
 # Copy this file to config.yml:
 #   cp config.yml.example config.yml
-# =============================================================================
 
 zurg: v1
 
-# =============================================================================
-# REQUIRED: Real-Debrid API Token
-# =============================================================================
 # Get your token from: https://real-debrid.com/apitoken
 token: "YOUR_REAL_DEBRID_API_TOKEN_HERE"
 
-# =============================================================================
-# Server Settings
-# =============================================================================
 host: "0.0.0.0"
 port: 9999
 
-# =============================================================================
-# Directory Structure Configuration
-# =============================================================================
+# Directory Structure
 # Sonarr handles: TV shows + Anime (anything with episodes)
 # Radarr handles: Movies (everything else)
-#
 # The 'group_order' determines priority - lower numbers are checked first
-# Shows (with episodes) are matched first, then movies catch everything else
-
 directories:
-  # TV Shows & Anime - picked up by Sonarr
-  # Matches anything with episode structure (S01E01, etc.)
   shows:
     group: media
     group_order: 10
     filters:
       - has_episodes: true
 
-  # Movies - picked up by Radarr
-  # Catch-all for everything without episode structure
   movies:
     group: media
     group_order: 100
@@ -49,15 +30,11 @@ directories:
     filters:
       - regex: /.*/
 
-# =============================================================================
 # Repair Settings - Auto-fix broken/expired download links
-# =============================================================================
 enable_repair: true
 check_for_changes_every_secs: 60
 
-# =============================================================================
 # Performance & Cache Settings
-# =============================================================================
 network_buffer_size: 4194304
 retain_folder_name_extension: false
 retain_rd_torrent_name: false
@@ -65,9 +42,7 @@ expose_no_stream_downloads: true
 auto_delete_rar_torrents: true
 use_download_cache: true
 
-# =============================================================================
 # Advanced Settings
-# =============================================================================
 concurrent_workers: 32
 api_rate_limit_per_minute: 250
 download_retries: 3
